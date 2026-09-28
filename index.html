@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AUDIT – Viagens e Hora Extra</title>
+<link rel="icon" type="image/png" href="favicon.png">
+  
+  <!-- Fontes e Ícones -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  
+  <link rel="stylesheet" href="assets/css/index.css">
+</head>
+<body>
+
+  <div class="container">
+    <header class="header">
+      <div class="brand-icon"><i class="fa-solid fa-route"></i></div>
+      <h1>AUDIT</h1>
+      <p>Escolha o tipo de lançamento</p>
+    </header>
+
+<div class="chooser-bar" id="chooserBar">
+  <div id="optViagem" class="chooser-card active" role="button" aria-pressed="true">
+    <i class="fa-solid fa-suitcase-rolling"></i>
+    <div>
+      <div class="chooser-title">LANÇAMENTO DE VIAGEM</div>
+      <div class="chooser-desc">Solicitação de diária (modelo atual)</div>
+    </div>
+  </div>
+  <div id="optHE" class="chooser-card" role="button" aria-pressed="false">
+    <i class="fa-solid fa-business-time"></i>
+    <div>
+      <div class="chooser-title">LANÇAMENTO DE HORA EXTRA</div>
+      <div class="chooser-desc">Controle de HE com justificativa</div>
+    </div>
+  </div>
+</div>
+<div class="switch-top"><button id="btnSwitch" class="btn-switch" type="button"><i class="fa-solid fa-repeat"></i> Alternar para Hora Extra</button></div>
+
+
+    <section id="secViagem">
+<div class="card">
+      <div class="card-header"><i class="fa-solid fa-suitcase-rolling"></i> Lançamento de Viagem</div>
+      <div class="card-body">
+        <form id="formSolicitacao">
+          <div class="form-group">
+            <label class="label">Colaborador</label>
+            <div class="input-wrapper">
+              <i class="fa-solid fa-user-tie"></i>
+              <select id="colaborador" class="input" required></select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="label">SUB</label>
+            <div class="input-wrapper">
+              <i class="fa-solid fa-location-crosshairs"></i>
+              <select id="utd" class="input" required>
+                <option value="" disabled selected>Selecione a SUB</option>
+                <option>IRECÊ</option>
+                <option>ITABERABA</option>
+                <option>JEQUIÉ</option>
+                <option>LIVRAMENTO NS</option>
+                <option>SEABRA</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="label">Data Saída (telemetria)</label>
+              <div class="input-wrapper"><i class="fa-solid fa-calendar-day"></i><input id="dataSaida" type="date" class="input" required></div>
+            </div>
+            <div class="form-group">
+              <label class="label">Hora Saída (telemetria)</label>
+              <div class="input-wrapper"><i class="fa-solid fa-clock"></i><input id="horaSaida" type="time" class="input" required></div>
+            </div>
+          </div>
+
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="label">Data Retorno (telemetria)</label>
+              <div class="input-wrapper"><i class="fa-solid fa-calendar-check"></i><input id="dataRet" type="date" class="input" required></div>
+            </div>
+            <div class="form-group">
+              <label class="label">Hora Retorno (telemetria)</label>
+              <div class="input-wrapper"><i class="fa-solid fa-clock"></i><input id="horaRet" type="time" class="input" required></div>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="label">Nota/Atividade</label>
+            <div class="input-wrapper"><i class="fa-solid fa-hashtag"></i><input id="numNota" class="input" placeholder="NF ou OS..." required></div>
+          </div>
+
+          <div class="form-group">
+            <label class="label">Destino</label>
+            <div class="input-wrapper"><i class="fa-solid fa-location-dot"></i><input id="destino" class="input" placeholder="Cidade/Bairro" required></div>
+          </div>
+
+          <div class="grid-2">
+            <div class="form-group">
+              <label class="label">Placa</label>
+              <div class="input-wrapper">
+                <i class="fa-solid fa-car-side"></i>
+                <select id="placa" class="input" required>
+                  <option value="" disabled selected>Carregando...</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group">
+              <label class="label">Frota</label>
+              <div class="input-wrapper"><i class="fa-solid fa-barcode"></i><input id="frota" class="input readonly" readonly placeholder="-"></div>
+            </div>
+          </div>
+
+          <div class="elig-box">
+            <div class="elig-title"><span>Resumo</span><span id="pillStatus" class="pill bad">Aguardando dados</span></div>
+            <div class="pill-group">
+              <span id="pillTempo" class="pill">Tempo: --:--</span>
+              <span id="pillValor" class="pill">Valor: R$ 0,00</span>
+            </div>
+          </div>
+
+          <button id="btnEnviar" class="btn btn-primary" style="margin-top: 20px;" disabled><i class="fa-solid fa-paper-plane"></i> Enviar Solicitação</button>
+        </form>
+      </div>
+    </div>
+
+    
+        <div id="por-num" class="tab-pane active">
+          <div style="display:flex; gap:10px">
+            <div class="input-wrapper" style="flex:1"><i class="fa-solid fa-hashtag"></i><input id="consultaNum" class="input" placeholder="Nº Solicitação"></div>
+            <button id="btnConsultar" class="btn btn-primary" style="width: auto;"><i class="fa-solid fa-arrow-right"></i></button>
+          </div>
+        </div>
+        <div id="por-colab" class="tab-pane">
+          <div class="form-group"><div class="input-wrapper"><i class="fa-solid fa-user"></i><select id="consultaColab" class="input"></select></div></div>
+          <button id="btnConsultarColab" class="btn btn-primary">Buscar Registros</button>
+        </div>
+        <div id="resultado" style="margin-top: 15px;"></div>
+      </div>
+    </div>
+  </div>
+
+  
+</section>
+
+<section id="secHE" class="hidden" aria-hidden="true">
+  <div class="card">
+    <div class="card-header"><i class="fa-solid fa-business-time"></i> Lançamento de Hora Extra</div>
+    <div class="card-body">
+      <form id="formHoraExtra">
+        <div class="form-group">
+          <label class="label">Nome do colaborador</label>
+          <div class="input-wrapper"><i class="fa-solid fa-user"></i><select id="heColaborador" class="input" required></select></div>
+        </div>
+        <div class="form-group">
+          <label class="label">SUB</label>
+          <div class="input-wrapper"><i class="fa-solid fa-location-crosshairs"></i>
+            <select id="heUtd" class="input" required>
+                <option value="" disabled selected>Selecione a SUB</option>
+                <option>IRECÊ</option>
+                <option>ITABERABA</option>
+                <option>JEQUIÉ</option>
+                <option>LIVRAMENTO NS</option>
+                <option>SEABRA</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="grid-3">
+          <div class="form-group">
+            <label class="label">Tipo de escala</label>
+            <div class="input-wrapper"><i class="fa-solid fa-people-arrows"></i>
+              <select id="heEscala" class="input" required>
+                <option value="" disabled selected>Selecione</option>
+                <option>6X3</option>
+                <option>5x2</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="label">Data</label>
+            <div class="input-wrapper"><i class="fa-solid fa-calendar"></i><input id="heData" type="date" class="input" required></div>
+          </div>
+          <div class="form-group">
+            <label class="label">Tipo de hora extra</label>
+            <div class="input-wrapper"><i class="fa-solid fa-tags"></i>
+              <select id="heTipo" class="input" required>
+                <option value="" disabled selected>Selecione</option>
+                <option>feriado</option>
+                <option>final de semana</option>
+                <option>folga do meio</option>
+                <option>dia de turno</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid-3">
+          <div class="form-group">
+            <label class="label">Acionado por</label>
+            <div class="input-wrapper"><i class="fa-solid fa-user-check"></i>
+              <select id="heAcionado" class="input" required>
+                <option value="" disabled selected>Selecione</option>
+                <option>FOCAL</option>
+                <option>SUPERVISOR</option>
+                <option>TEC. ESPECIALISTA</option>
+                <option>COI</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="label">Autorizado pelo supervisor?</label>
+            <div class="input-wrapper"><i class="fa-solid fa-user-shield"></i>
+              <select id="heAutorizado" class="input" required>
+                <option value="" disabled selected>Selecione</option>
+                <option>SIM</option>
+                <option>NÃO</option>
+              </select>
+            </div>
+            <div id="heWarn" class="warn-box"><i class="fa-solid fa-triangle-exclamation"></i>ATENÇÃO! A REALIZAÇÃO DE HORA EXTRA SÓ É PERMITIDA COM AUTORIZAÇÃO PRÉVIA DO SUPERVISOR DA UNIDADE!</div>
+          </div>
+          <div class="form-group"><label class="label">Modalidade do período</label><div class="input-wrapper"><i class="fa-solid fa-clock-rotate-left"></i><select id="heModalidade" class="input" required><option value="" disabled selected>Selecione</option><option value="ANTECIPACAO_TURNO">ANTECIPAÇÃO DE TURNO</option><option value="EXTENSAO_TURNO">EXTENSÃO DE TURNO</option><option value="FOLGA_FERIADO">ACIONADO EM FOLGA OU FERIADO</option></select></div></div>
+<div class="form-group he-periodo-group"><label class="label">Período da hora extra</label><div class="grid-2">
+<div><small class="he-time-label">HORÁRIO INICIAL</small><div id="heIniLivreWrap" class="input-wrapper"><i class="fa-solid fa-clock"></i><input id="heIni" type="time" class="input" required></div><div id="heIniPadraoWrap" class="input-wrapper he-time-locked" hidden><i class="fa-solid fa-lock"></i><select id="heIniPadrao" class="input" disabled><option value="" disabled selected>Selecione</option><option>00:00</option><option>14:00</option><option>15:00</option><option>16:00</option><option>17:00</option><option>17:30</option><option>20:00</option></option><option>21:00</option><option>22:00</option><option>23:00</option></select></div></div>
+<div><small class="he-time-label">HORÁRIO FINAL</small><div id="heFimLivreWrap" class="input-wrapper"><i class="fa-solid fa-clock"></i><input id="heFim" type="time" class="input" required></div><div id="heFimPadraoWrap" class="input-wrapper he-time-locked" hidden><i class="fa-solid fa-lock"></i><select id="heFimPadrao" class="input" disabled><option value="" disabled selected>Selecione</option><option>06:00</option><option>07:00</option><option>08:00</option><option>10:00</option><option>12:00</option><option>13:00</option><option>14:00</option><option>15:00</option></option><option>16:00</option></select></div></div></div><div id="heModalidadeAjuda" class="he-rule-note">Selecione a modalidade para aplicar a regra dos horários.</div></div>
+        </div>
+
+        <div class="form-group">
+          <label class="label">Justificativa</label>
+          <div class="input-wrapper"><i class="fa-solid fa-comment"></i><textarea id="heJust" class="input" rows="3" placeholder="Descreva o motivo da HE" required></textarea></div>
+        </div>
+
+        <div class="elig-box">
+          <div class="elig-title"><span>Resumo</span><span id="hePillStatus" class="pill bad">Aguardando dados</span></div>
+          <div class="pill-group">
+            <span id="hePillMin" class="pill">Duração: -- min</span>
+            <span id="hePillFaixa" class="pill">Faixa: -</span>
+ <span id="hePillCont" class="pill">Contabilizado: -- min</span>
+            <span id="hePillBeneficio" class="pill">Benefício: -</span>
+            <span id="hePillValor" class="pill">Valor: R$ 0,00</span>
+          </div>
+        </div>
+
+        <button id="heBtnEnviar" class="btn btn-primary" style="margin-top: 20px;" disabled><i class="fa-solid fa-paper-plane"></i> Enviar Lançamento</button>
+      </form>
+    </div>
+  </div>
+</section>
+
+<div id="toast" class="toast"></div>
+
+  <!-- FIREBASE SCRIPTS -->
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+
+  
+  <script src="assets/js/index.js"></script>
+</body>
+</html>
+

@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AUDIT – Auditoria de Viagens</title>
+  <link rel="icon" type="image/png" href="favicon.png">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <link rel="stylesheet" href="assets/css/admin.css">
+</head>
+<body>
+  <div id="printArea">
+    <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #000; padding-bottom:10px; margin-bottom:15px">
+      <div style="font-weight:800; font-size:20px; color:#6D28D9"><i class="fa-solid fa-route"></i> AUDIT</div>
+      <div id="pDate" style="font-size:10px"></div>
+    </div>
+    <h2 id="pTitle" style="margin:0; font-size:16px">Relatório de Lançamentos Viagens</h2>
+    <p id="pSub" style="margin:5px 0 15px 0; font-weight:bold; font-size:12px"></p>
+    <div id="pContainer"></div>
+    <div style="text-align:right; margin-top:20px; border-top:2px solid #000; padding-top:10px">
+      <h3 style="font-size:14px">Soma Total Aprovada: <span id="pTotalValue">R$ 0,00</span></h3>
+    </div>
+  </div>
+
+  <div id="loginScreen" class="login-screen">
+    <div class="login-card">
+      <div style="text-align:center; margin-bottom:30px">
+        <div style="width:60px; height:60px; background:var(--primary); color:white; border-radius:15px; display:flex; align-items:center; justify-content:center; font-size:28px; margin:0 auto 7px"><i class="fa-solid fa-route"></i></div>
+        <h2 style="margin:0; font-weight:800">AUDIT</h2>
+        <p style="color:var(--text-muted); font-size:13px; margin-top:1px">Auditoria de Viagens</p>
+      </div>
+      <div style="display:grid; gap:18px">
+        <input id="email" class="input" placeholder="E-mail corporativo"/>
+        <input id="senha" type="password" class="input" placeholder="Sua senha"/>
+        <div style="text-align:left; margin-top:-8px"><a id="recSenha" style="color:#6D28D9; font-weight:700; font-size:13px; cursor:pointer">Recuperar senha</a></div>
+        <button id="btnLogin" class="btn btn-primary login-submit" type="button" style="justify-content:center; padding:14px 22px; border-radius:16px; background:#7C3AED; font-size:15px"><span class="login-btn-content"><i class="fa-solid fa-right-to-bracket"></i> Entrar no Sistema</span><span class="login-btn-loading"><span class="login-spinner"></span> Entrando...</span></button>
+        <div id="loginMsg" class="login-message" role="status" aria-live="polite"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="loginLoadingOverlay" class="login-loading-overlay" aria-hidden="true"><div class="login-loading-card"><span class="login-spinner login-spinner-large"></span><strong>Carregando seu acesso...</strong><small>Preparando os dados do sistema</small></div></div>
+  <div id="appShell" style="display:none">
+    <header class="top-bar">
+      <div class="brand"><div class="logo"><i class="fa-solid fa-route"></i></div> <span>AUDIT</span></div>
+      <nav class="nav-links" id="nav">
+        <a href="#dash" data-tab="dash" class="active"><i class="fa-solid fa-chart-pie"></i> Dashboard</a>
+        <a href="#lanca" data-tab="lanca"><i class="fa-solid fa-table-list"></i> Lançamentos</a>
+        <a href="#mass" data-tab="mass" id="navMass" style="display:none"><i class="fa-solid fa-bolt"></i> Massa DEV</a>
+        <a href="#veic" data-tab="veic"><i class="fa-solid fa-car"></i> Veículos</a>
+        <a href="#dev" data-tab="dev" id="navDev" style="display:none"><i class="fa-solid fa-user-gear"></i> DEV</a>
+        <a href="#heDash" data-tab="heDash" id="navHeDash" style="display:none"><i class="fa-solid fa-chart-simple"></i> HE Dashboard</a>
+        <a href="#heLanca" data-tab="heLanca" id="navHeLanca" style="display:none"><i class="fa-solid fa-list-check"></i> HE Lançamentos</a>
+      </nav>
+      <div class="user-actions">
+        <div style="text-align:right; font-size:12px">
+          <div id="userBox" style="font-weight:700">Laura Bispo Moreira</div>
+          <div id="userRole" style="color:#94A3B8; font-weight:700; text-transform:uppercase">Acesso</div>
+        </div>
+        <button id="btnLogout" class="btn-logout"><i class="fa-solid fa-power-off"></i></button>
+      </div>
+    </header>
+
+    <main class="app-content">
+      <div class="mode-bar" id="modeBar">
+        <div class="mode-card active" id="mViagem" role="button">
+          <i class="fa-solid fa-route"></i>
+          <div><div class="mode-title">AUDITORIA DE VIAGENS</div><div class="mode-desc">Dashboard, lançamentos, massa e veículos</div></div>
+        </div>
+        <div class="mode-card" id="mHE" role="button">
+          <i class="fa-solid fa-business-time"></i>
+          <div><div class="mode-title">CONTROLE DE HORA EXTRA</div><div class="mode-desc">Aprovação + BI de HE</div></div>
+        </div>
+      </div>
+      <div class="mode-switch"><button class="btn-switch" id="btnModeSwitch" type="button"><i class="fa-solid fa-repeat"></i> Alternar Módulo</button></div>
+
+      <!-- SEÇÃO VIAGENS -->
+      <section id="tab-dash">
+        <div class="card">
+          <h3><i class="fa-solid fa-filter"></i> Filtros Dashboard (BI)</h3>
+          <div class="he-filter-grid">
+            <div><label>INÍCIO</label><input type="date" class="input" id="dFiltroIni"></div>
+            <div><label>FIM</label><input type="date" class="input" id="dFiltroFim"></div>
+            <div><label>STATUS</label><select id="dFiltroStatus" class="input"><option value="">Todos</option><option>Pendente</option><option>Aprovado</option><option>Reprovado</option></select></div>
+            <div><label>SUPERINTENDÊNCIA</label><select id="dFiltroSuperintendencia" class="input"><option value="">Todas</option></select></div>
+            <div><label>SETOR</label><select id="dFiltroSetor" class="input"><option value="">Todos</option></select></div>
+            <div><label>SUB</label><select id="dFiltroUtd" class="input"><option value="">Todas</option></select></div>
+            <div style="display:flex; gap:10px">
+              <button class="btn btn-primary" id="btnAplicaDash" style="flex:1">Atualizar Gráficos</button>
+              <button class="btn btn-light" id="btnExportDash" title="Excel"><i class="fa-solid fa-file-excel"></i></button>
+              <button class="btn btn-light" id="btnLimpaDash"><i class="fa-solid fa-rotate"></i></button>
+            </div>
+          </div>
+        </div>
+        <div class="kpi-grid">
+          <div class="kpi-card"><span class="kpi-label">Lançamentos</span><span class="kpi-value" id="kTotal">0</span></div>
+          <div class="kpi-card" style="border-left: 4px solid var(--success)"><span class="kpi-label">Aprovados</span><span class="kpi-value" id="kAprov" style="color:var(--success)">0</span></div>
+          <div class="kpi-card" style="border-left: 4px solid var(--warning)"><span class="kpi-label">Pendentes</span><span class="kpi-value" id="kPend" style="color:var(--warning)">0</span></div>
+          <div class="kpi-card" style="border-left: 4px solid var(--primary)"><span class="kpi-label">Total Aprovado</span><span class="kpi-value" id="kVal">R$ 0,00</span></div>
+ <div class="kpi-card" style="border-left: 4px solid var(--success)"><span class="kpi-label">Valor Aprovado</span><span class="kpi-value" id="kValAprov" style="color:var(--success)">R$ 0,00</span></div>
+ <div class="kpi-card" style="border-left: 4px solid var(--warning)"><span class="kpi-label">Valor Pendente</span><span class="kpi-value" id="kValPend" style="color:var(--warning)">R$ 0,00</span></div>
+ <div class="kpi-card" style="border-left: 4px solid var(--danger)"><span class="kpi-label">Valor Reprovado</span><span class="kpi-value" id="kValReprov" style="color:var(--danger)">R$ 0,00</span></div>
+        </div>
+        <div class="card"><h3>Distribuição por Status</h3><div style="height:200px"><canvas id="chStatus"></canvas></div></div>
+        <div class="card"><h3>Top 10 Colaboradores (R$)</h3><div style="height:100px"><canvas id="chTop"></canvas></div></div>
+        <div class="card"><h3>Ranking Completo Aprovados</h3><div id="tblRankContainer" class="table-responsive"></div></div>
+      </section>
+
+      <section id="tab-lanca" style="display:none">
+        <div class="card">
+          <div class="he-filter-grid">
+            <div><label>DATA INICIAL</label><input type="date" class="input" id="lFiltroIni"></div>
+            <div><label>DATA FINAL</label><input type="date" class="input" id="lFiltroFim"></div>
+            <div><label>COLABORADOR</label><select id="lFiltroColab" class="input"><option value="">Todos</option></select></div>
+            <div><label>SUPERINTENDÊNCIA</label><select id="lFiltroSuperintendencia" class="input"><option value="">Todas</option></select></div>
+            <div><label>SETOR</label><select id="lFiltroSetor" class="input"><option value="">Todos</option></select></div>
+            <div><label>SUB</label><select id="lFiltroUtd" class="input"><option value="">Todas</option></select></div>
+            <div><label>STATUS</label><select id="lFiltroStatus" class="input"><option value="">Todos</option><option>Pendente</option><option>Aprovado</option><option>Reprovado</option></select></div>
+      <div><label>ALTERADO POR</label><select id="lFiltroAlterado" class="input"><option value="">Todos</option></select></div>
+      <div style="display:flex; gap:10px"
+              <button class="btn btn-primary" id="btnAplicaLanca" style="flex:1">Filtrar Lançamentos</button>
+              <button class="btn btn-light" id="btnLimpaLanca"><i class="fa-solid fa-eraser"></i></button>
+              <button class="btn btn-light" id="btnImprimir"><i class="fa-solid fa-print"></i></button>
+              <button class="btn btn-light" id="btnExport" title="Excel"><i class="fa-solid fa-file-excel"></i></button>
+            </div>
+          </div>
+        </div>
+        <div class="card"><div id="tblLancaContainer" class="table-responsive"></div></div>
+      </section>
+
+      <!-- SEÇÃO HORA EXTRA -->
+      <section id="tab-heDash" style="display:none">
+  <div class="card">
+    <h3><i class="fa-solid fa-filter"></i> Filtros – Hora Extra</h3>
+    <div class="he-filter-grid">
+      <div><label>Início</label><input type="date" class="input" id="heFiltroIni"></div>
+      <div><label>Fim</label><input type="date" class="input" id="heFiltroFim"></div>
+      <div><label>Status</label><select id="heFiltroStatus" class="input"><option value="">Todos</option><option>Pendente</option><option>Aprovado</option><option>Reprovado</option></select></div>
+      <div><label>SUPERINTENDÊNCIA</label><select id="heFiltroSuperintendencia" class="input"><option value="">Todas</option></select></div>
+      <div><label>SETOR</label><select id="heFiltroSetor" class="input"><option value="">Todos</option></select></div>
+      <div><label>SUB</label><select id="heFiltroUtd" class="input"><option value="">Todas</option></select></div>
+      <div><label>Acionado Por</label><select id="heFiltroAcionado" class="input"><option value="">Todos</option><option>FOCAL</option><option>COI</option><option>TEC. ESPECIALISTA</option><option>SUPERVISOR</option></select></div>
+      <div><label>Autorizado Supervisor</label><select id="heFiltroAutorizado" class="input"><option value="">Todos</option><option>SIM</option><option>NÃO</option></select></div>
+      <div><label>Tipo HE</label><select id="heFiltroTipo" class="input" multiple size="3"><option>feriado</option><option>final de semana</option><option>folga do meio</option><option>dia de turno</option></select></div>
+      <div>
+        <label>Benefício</label>
+        <select id="heFiltroBenef" class="input" multiple size="3">
+          <option value="refeicao">refeição</option>
+          <option value="lanche">lanche</option>
+          <option value="acumulativo">acumulativo</option>
+          <option value="sem">sem benefício</option>
+        </select>
+      </div>
+      <div>
+        <label>Faixas</label>
+        <div style="display:grid; gap:4px; font-size:11px">
+          <label><input type="checkbox" id="heR10" checked> 10-15</label>
+          <label><input type="checkbox" id="heR16" checked> 16-30</label>
+          <label><input type="checkbox" id="heR31" checked> 31-60</label>
+        </div>
+      </div>
+      <div style="display:flex; gap:10px">
+        <button class="btn btn-primary" id="btnAplicaHE" style="flex:1">Atualizar Gráficos</button>
+        <button class="btn btn-light" id="btnExportHE" title="Excel"><i class="fa-solid fa-file-excel"></i></button>
+        <button class="btn btn-light" id="btnLimpaHE"><i class="fa-solid fa-rotate"></i></button>
+      </div>
+    </div>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi-card"><span class="kpi-label">Total de Solicitações HE</span><span class="kpi-value" id="kheTotal">0</span></div>
+    <div class="kpi-card" style="border-left: 4px solid var(--success)"><span class="kpi-label">Horas Totais</span><span class="kpi-value" id="kheAprov" style="color:var(--success)">0h 00m</span></div>
+    <div class="kpi-card" style="border-left: 4px solid var(--warning)"><span class="kpi-label">Solicitações Pendentes</span><span class="kpi-value" id="khePend" style="color:var(--warning)">0</span></div>
+    <div class="kpi-card" style="border-left: 4px solid var(--primary)"><span class="kpi-label">Total Benefícios Aprovados</span><span class="kpi-value" id="kheBenefVal">R$ 0,00</span></div>
+    <div class="kpi-card" style="border-left: 4px solid var(--primary)"><span class="kpi-label">Qtd Benefícios Aprovados</span><span class="kpi-value" id="kheBenefQtd">0</span></div>
+    <div class="kpi-card" style="border-left: 4px solid var(--success)"><span class="kpi-label">Valor Benefício Aprovado</span><span class="kpi-value" id="kheValAprov" style="color:var(--success)">R$ 0,00</span></div>
+    <div class="kpi-card" style="border-left: 4px solid var(--warning)"><span class="kpi-label">Valor Benefício Pendente</span><span class="kpi-value" id="kheValPend" style="color:var(--warning)">R$ 0,00</span></div>
+    <div class="kpi-card" style="border-left: 4px solid var(--danger)"><span class="kpi-label">Valor Benefício Reprovado</span><span class="kpi-value" id="kheValReprov" style="color:var(--danger)">R$ 0,00</span></div>
+  </div>
+
+  
+<div class="heDashWrap">
+  <!-- COLUNA ESQUERDA: Ranking -->
+  <div class="card">
+    <h3><i class="fa-solid fa-ranking-star"></i> Ranking de Horas</h3>
+    <div id="heRankTbl" class="table-responsive"></div>
+  </div>
+
+  <!-- COLUNA DIREITA: Gráficos -->
+  <div class="heDashRight">
+    <div class="card">
+      <h3><i class="fa-solid fa-chart-pie"></i> Tipo de HE</h3>
+      <div class="heChartBox"><canvas id="heChartTipo"></canvas></div>
+    </div>
+
+    <div class="card">
+      <h3><i class="fa-solid fa-chart-pie"></i> Faixas</h3>
+      <div class="heChartBox"><canvas id="heChartFaixa"></canvas></div>
+    </div>
+
+    <div class="card">
+      <h3><i class="fa-solid fa-utensils"></i> Benefícios (Qtd)</h3>
+      <div class="heChartBox"><canvas id="heChartBenefQtd"></canvas></div>
+    </div>
+
+    <div class="card">
+      <h3><i class="fa-solid fa-sack-dollar"></i> Benefícios (R$)</h3>
+      <div class="heChartBox"><canvas id="heChartBenefVal"></canvas></div>
+    </div>
+
+    <div class="card heTop20">
+      <h3><i class="fa-solid fa-chart-column"></i> Top 20 Colaboradores (Valor Benefício)</h3>
+      <div style="height:420px"><canvas id="heChartTopBenef"></canvas></div>
+    </div>
+  </div>
+</div>
+</section>
+
+      <section id="tab-heLanca" style="display:none">
+        <div class="card">
+          <h3><i class="fa-solid fa-filter"></i> Filtros – Lançamentos HE</h3>
+          <div class="he-filter-grid">
+            <div><label>COLABORADOR</label><select id="heLFiltroColab" class="input"><option value="">Todos</option></select></div>
+            <div><label>SUPERINTENDÊNCIA</label><select id="heLFiltroSuperintendencia" class="input"><option value="">Todas</option></select></div>
+            <div><label>SETOR</label><select id="heLFiltroSetor" class="input"><option value="">Todos</option></select></div>
+            <div><label>SUB</label><select id="heLFiltroUtd" class="input"><option value="">Todas</option></select></div>
+            <div><label>DATA INICIAL</label><input type="date" class="input" id="heLFiltroIni"></div>
+            <div><label>DATA FINAL</label><input type="date" class="input" id="heLFiltroFim"></div>
+            <div><label>STATUS</label><select id="heLFiltroStatus" class="input"><option value="">Todos</option><option>Pendente</option><option>Aprovado</option><option>Reprovado</option></select></div>
+            <div><label>ACIONADO POR</label><select id="heLFiltroAcionado" class="input"><option value="">Todos</option><option>FOCAL</option><option>COI</option><option>TEC. ESPECIALISTA</option><option>SUPERVISOR</option></select></div>
+            <div><label>AUTORIZADO?</label><select id="heLFiltroAutorizado" class="input"><option value="">Todos</option><option>SIM</option><option>NÃO</option></select></div>
+ <div><label>BENEFÍCIO</label><select id="heLFiltroBenef" class="input"><option value="">Todos</option><option value="refeicao">refeição</option><option value="lanche">lanche</option><option value="acumulativo">acumulativo</option><option value="sem">sem benefício</option></select></div>
+            <div style="display:flex; gap:10px">
+              <button class="btn btn-primary" id="btnAplicaHEList" style="flex:1">Filtrar</button>
+              <button class="btn btn-light" id="btnLimpaHEList"><i class="fa-solid fa-eraser"></i></button>
+              <button class="btn btn-light" id="btnExportHEList" title="Excel"><i class="fa-solid fa-file-excel"></i></button>
+            </div>
+          </div>
+        </div>
+        <div class="card"><div id="heListaTbl" class="table-responsive"></div></div>
+      </section>
+
+      <!-- GESTÃO EM MASSA / VEÍCULOS -->
+      <section id="tab-mass" style="display:none">
+        <div class="card dev-excel-mass-card">
+          <div class="dev-excel-title">
+            <div class="dev-excel-icon"><i class="fa-solid fa-file-excel"></i></div>
+            <div><h2>Atualização de Status em Massa por Excel</h2><p>Recurso exclusivo DEV. Filtre os lançamentos, exporte a planilha, analise a Justificativa Index, preencha NOVO_STATUS e importe o mesmo arquivo.</p></div>
+          </div>
+          <div class="dev-excel-filters">
+            <div><label>MÓDULO</label><select id="massFiltroModulo" class="input"><option value="VIAGEM">Auditoria de Viagens</option><option value="HE">Hora Extra</option></select></div>
+            <div><label>DATA INICIAL</label><input id="massFiltroIni" type="date" class="input"></div>
+            <div><label>DATA FINAL</label><input id="massFiltroFim" type="date" class="input"></div>
+            <div><label>SUB</label><select id="massFiltroUtd" class="input"><option value="">Todas</option><option>IRECÊ</option><option>ITABERABA</option><option>JEQUIÉ</option><option>LIVRAMENTO NS</option><option>SEABRA</option></select></div>
+            <div><label>STATUS</label><select id="massFiltroStatus" class="input"><option value="">Todos</option><option>Pendente</option><option>Aprovado</option><option>Reprovado</option></select></div>
+            <div><label>COLABORADOR</label><input id="massFiltroColab" type="search" class="input" placeholder="Nome ou parte do nome"></div>
+          </div>
+          <div class="dev-excel-actions">
+            <button class="btn btn-primary" type="button" onclick="exportarStatusMassaExcel()"><i class="fa-solid fa-file-arrow-down"></i> Exportar planilha filtrada</button>
+            <button class="btn btn-light" type="button" onclick="limparFiltrosStatusMassa()"><i class="fa-solid fa-eraser"></i> Limpar filtros</button>
+            <button class="btn btn-primary" type="button" onclick="document.getElementById('fileStatusMassa').click()"><i class="fa-solid fa-file-arrow-up"></i> Importar planilha alterada</button>
+            <input id="fileStatusMassa" type="file" accept=".xlsx,.xls" hidden>
+          </div>
+          <div class="dev-excel-help"><b>Como usar:</b> não altere MODULO nem DOCUMENTO_ID. Confira JUSTIFICATIVA_INDEX, preencha NOVO_STATUS com Pendente, Aprovado ou Reprovado e, se necessário, preencha OBSERVACAO_AUDITORIA. Na importação, o sistema registra automaticamente o usuário em ALTERADO_POR e a data em ALTERADO_EM.</div>
+          <div id="massExcelResult" class="dev-mass-result" style="display:none"></div>
+        </div>
+      </section>
+      <section id="tab-veic" style="display:none">
+        <div style="display:grid; grid-template-columns: 1fr 2.5fr; gap:25px">
+          <div class="card" style="text-align:center">
+            <i class="fa-solid fa-car fa-3x" style="color:var(--primary); margin-bottom:15px"></i>
+            <h3>Gestão de Frota</h3>
+            <button class="btn btn-primary" style="width:100%; margin-bottom:10px" onclick="openSpreadsheet('veic')"><i class="fa-solid fa-keyboard"></i> Planilha Manual</button>
+            <input type="file" id="fileVeic" accept=".xlsx,.xls" style="display:none" />
+            <button class="btn btn-light" style="width:100%; margin-bottom:10px" onclick="document.getElementById('fileVeic').click()"><i class="fa-solid fa-file-excel"></i> Importar Excel</button>
+            <button class="btn btn-light" style="width:100%" onclick="baixarModeloVeiculos()"><i class="fa-solid fa-download"></i> Baixar Modelo</button>
+            <p style="font-size:11px; color:var(--text-muted); margin-top:12px; line-height:1.4">Formato esperado: colunas <b>PLACA</b>, <b>FROTA</b> e <b>SUB</b>.</p>
+          </div>
+          <div class="card"><div id="tblVeicContainer" class="table-responsive"></div></div>
+        </div>
+      </section>
+      <section id="tab-dev" style="display:none">
+        <div class="card">
+          <h3><i class="fa-solid fa-user-plus"></i> Cadastro de Usuários - DEV</h3>
+          <div class="dev-user-form">
+            <input id="devNome" class="input" placeholder="Nome completo" />
+            <input id="devEmail" class="input" placeholder="E-mail do usuário" />
+            <input id="devSenha" type="password" class="input" placeholder="Senha provisória" />
+            <select id="devFuncao" class="input">
+              <option value="backoffice">Backoffice</option>
+              <option value="supervisor">Supervisor</option>
+              <option value="gerente">Gerente</option>
+              <option value="superintendente">Superintendente</option>
+              <option value="dev">DEV</option>
+            </select>
+            <select id="devSetor" class="input"><option value="">Selecione o setor</option></select>
+            <select id="devUtd" class="input"><option value="">Selecione a SUB</option></select>
+            <input id="devSuperintendencia" class="input" placeholder="Superintendência da SUB" readonly />
+            <button class="btn btn-primary" onclick="criarUsuarioDev()"><i class="fa-solid fa-user-plus"></i> Criar Usuário Admin</button>
+            <p class="dev-user-help">Supervisor e Backoffice precisam estar vinculados a uma SUB. Gerente, Superintendente e DEV possuem visão global.</p>
+          </div>
+        </div>
+
+        <div class="card">
+          <h3><i class="fa-solid fa-database"></i> Atualização e Inclusão em Massa</h3>
+          <p style="font-size:13px; color:var(--text-muted); line-height:1.6; margin-top:-8px">
+            Ferramentas exclusivas do perfil DEV para atualizar a SUB de registros existentes e inserir novos lançamentos por Excel.
+          </p>
+          <div class="dev-mass-grid">
+            <div class="dev-mass-box">
+              <div class="dev-mass-icon"><i class="fa-solid fa-sitemap"></i></div>
+              <div><h4>Cadastrar estrutura de SUBs em massa</h4><p>Cadastre ou atualize as SUBs, o setor ao qual cada SUB pertence e a superintendência responsável pelo setor.</p></div>
+              <div class="dev-mass-actions"><button class="btn btn-light" type="button" onclick="baixarModeloUtds()"><i class="fa-solid fa-download"></i> Modelo de SUBs</button><button class="btn btn-primary" type="button" onclick="document.getElementById('fileUtds').click()"><i class="fa-solid fa-file-import"></i> Importar SUBs</button><input type="file" id="fileUtds" accept=".xlsx,.xls" hidden></div>
+              <small>Colunas obrigatórias: SUB, SETOR e SUPERINTENDENCIA.</small>
+            </div>
+            <div class="dev-mass-box">
+              <div class="dev-mass-icon"><i class="fa-solid fa-user-shield"></i></div>
+              <div><h4>Atualizar perfis dos usuários Admin</h4><p>Exporte os usuários atuais, altere NOVO_PERFIL, NOVA_SUB e NOVO_SETOR e importe o arquivo.</p></div>
+              <div class="dev-mass-actions"><button class="btn btn-light" type="button" onclick="exportarPerfisAdmin()"><i class="fa-solid fa-file-export"></i> Exportar perfis</button><button class="btn btn-primary" type="button" onclick="document.getElementById('filePerfisAdmin').click()"><i class="fa-solid fa-file-import"></i> Importar atualização</button><input type="file" id="filePerfisAdmin" accept=".xlsx,.xls" hidden></div>
+              <small>Perfis válidos: BACKOFFICE, SUPERVISOR, GERENTE, SUPERINTENDENTE e DEV.</small>
+            </div>
+            <div class="dev-mass-box">
+              <div class="dev-mass-icon"><i class="fa-solid fa-users"></i></div>
+              <div><h4>Cadastrar colaboradores do Index em massa</h4><p>Importe novos colaboradores vinculados à SUB e ao setor. A matrícula evita duplicidade.</p></div>
+              <div class="dev-mass-actions"><button class="btn btn-light" type="button" onclick="baixarModeloColaboradores()"><i class="fa-solid fa-download"></i> Modelo colaboradores</button><button class="btn btn-primary" type="button" onclick="document.getElementById('fileColaboradores').click()"><i class="fa-solid fa-cloud-arrow-up"></i> Importar colaboradores</button><input type="file" id="fileColaboradores" accept=".xlsx,.xls" hidden></div>
+              <small>Colunas: NOME, MATRICULA, SUB, SETOR e ATIVO.</small>
+            </div>
+            <div class="dev-mass-box">
+              <div class="dev-mass-icon"><i class="fa-solid fa-pen-to-square"></i></div>
+              <div><h4>Atualizar SUB dos lançamentos</h4><p>Exporte os registros existentes, preencha NOVA_SUB e importe o arquivo.</p></div>
+              <div class="dev-mass-actions"><button class="btn btn-light" type="button" onclick="baixarModeloAtualizacaoSUB()"><i class="fa-solid fa-file-export"></i> Extrair modelo</button><button class="btn btn-primary" type="button" onclick="document.getElementById('fileAtualizaSUB').click()"><i class="fa-solid fa-file-import"></i> Importar</button><input type="file" id="fileAtualizaSUB" accept=".xlsx,.xls" hidden></div>
+            </div>
+            <div class="dev-mass-box">
+              <div class="dev-mass-icon"><i class="fa-solid fa-file-circle-plus"></i></div>
+              <div><h4>Inserir novos lançamentos em massa</h4><p>Crie novos registros de Viagens ou Hora Extra usando os modelos.</p></div>
+              <div class="dev-mass-actions"><button class="btn btn-light" onclick="baixarModeloNovosDados('viagem')"><i class="fa-solid fa-route"></i> Modelo Viagens</button><button class="btn btn-light" onclick="baixarModeloNovosDados('he')"><i class="fa-solid fa-business-time"></i> Modelo HE</button><button class="btn btn-primary" onclick="document.getElementById('fileNovosDados').click()"><i class="fa-solid fa-cloud-arrow-up"></i> Importar</button><input type="file" id="fileNovosDados" accept=".xlsx,.xls" hidden></div>
+            </div>
+          </div>
+          <div id="devMassResult" class="dev-mass-result" style="display:none"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div id="modalEdit" class="modal-overlay">
+    <div class="modal-content" style="max-width:600px"><h2 id="editTitle">Editar Registro</h2><div id="editBody" style="display:grid; gap:15px; margin-top:15px"></div><div style="margin-top:25px; display:flex; gap:10px; justify-content:flex-end"><button class="btn btn-light" onclick="closeEdit()">Fechar</button><button class="btn btn-primary" id="btnSaveEdit">Gravar</button></div></div>
+  </div>
+
+  <div id="modalConfirm" class="modal-overlay">
+    <div class="modal-content" style="max-width:400px; text-align:center"><i class="fa-solid fa-triangle-exclamation fa-4x" style="color:var(--danger)"></i><h3 id="confirmTitle">Confirmar?</h3><p id="confirmMsg"></p><div style="margin-top:25px; display:flex; gap:10px; justify-content:center"><button class="btn btn-light" onclick="closeConfirm()">Cancelar</button><button class="btn btn-danger" id="btnDeleteConfirm">Sim, Excluir</button></div></div>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+  
+  
+  <div id="modalSheet" class="modal-overlay">
+    <div class="modal-content">
+      <div style="display:flex; justify-content:space-between; align-items:center"><h2 id="sheetTitle">Planilha</h2><button class="btn-light" onclick="closeSpreadsheet()"><i class="fa-solid fa-xmark"></i></button></div>
+      <div class="spreadsheet-wrap"><table class="sheet-table" id="mainSheet"><thead id="sheetHead"><tr><th>#</th><th>Campo 1</th><th>Campo 2</th></tr></thead><tbody id="sheetBody"></tbody></table></div>
+      <div style="display:flex; justify-content:space-between"><button class="btn btn-light" onclick="addRows(50)">+ 50 Linhas</button><button class="btn btn-primary" id="btnSaveSheet">Salvar Dados</button></div>
+    </div>
+  </div>
+  <div id="toast" class="toast"></div>
+  <script src="assets/js/admin.js"></script>
+</body>
+</html>
+
